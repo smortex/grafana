@@ -190,6 +190,12 @@ class DataSourceWithBackend<
       body.range = range;
       body.from = range.from.valueOf().toString();
       body.to = range.to.valueOf().toString();
+      if (range.fromNano) {
+        body.fromNano = range.fromNano;
+      }
+      if (range.toNano) {
+        body.toNano = range.toNano;
+      }
     }
 
     if (config.featureToggles.queryOverLive) {

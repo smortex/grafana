@@ -127,8 +127,22 @@ export class TestDataDataSource extends DataSourceWithBackend<TestData> {
     }
 
     if (backendQueries.length) {
+      const currentRange = options.range;
+      const testRange: TimeRange = {
+        from: currentRange.from,
+        to: currentRange.to,
+        fromNano: 123654,
+        toNano: 123654,
+        raw: {
+          from: currentRange.raw.from,
+          to: currentRange.raw.to,
+          fromNano: 123654,
+          toNano: 123654,
+        },
+      };
       const backendOpts = {
         ...options,
+        range: testRange,
         targets: backendQueries,
       };
       streams.push(super.query(backendOpts));

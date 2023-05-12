@@ -198,6 +198,18 @@ export const describeTimeRangeAbbreviation = (range: TimeRange, timeZone?: TimeZ
   return parsed ? timeZoneAbbrevation(parsed, { timeZone }) : '';
 };
 
+function updateNsFromRaw(range: TimeRange): TimeRange {
+  const result = { ...range };
+  const { fromNano, toNano } = range.raw;
+  if (fromNano != null) {
+    result.fromNano = fromNano;
+  }
+  if (toNano != null) {
+    result.toNano = toNano;
+  }
+  return result;
+}
+
 export const convertRawToRange = (
   raw: RawTimeRange,
   timeZone?: TimeZone,
@@ -208,10 +220,10 @@ export const convertRawToRange = (
   const to = dateTimeParse(raw.to, { roundUp: true, timeZone, fiscalYearStartMonth, format });
 
   if (dateMath.isMathString(raw.from) || dateMath.isMathString(raw.to)) {
-    return { from, to, raw };
+    return updateNsFromRaw({ from, to, raw });
   }
 
-  return { from, to, raw: { from, to } };
+  return updateNsFromRaw({ from, to, raw: { from, to } });
 };
 
 function isRelativeTime(v: DateTime | string) {

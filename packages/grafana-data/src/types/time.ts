@@ -10,11 +10,15 @@ import { dateTime, DateTime } from '../datetime/moment_wrapper';
 export interface RawTimeRange {
   from: DateTime | string;
   to: DateTime | string;
+  fromNano?: number;
+  toNano?: number;
 }
 
 export interface TimeRange {
   from: DateTime;
+  fromNano?: number;
   to: DateTime;
+  toNano?: number;
   raw: RawTimeRange;
 }
 

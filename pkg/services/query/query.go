@@ -247,13 +247,22 @@ func (s *ServiceImpl) handleQuerySingleDatasource(ctx context.Context, user *use
 	return s.pluginClient.QueryData(ctx, req)
 }
 
+func makeBackendTimeRange(r legacydata.DataTimeRange, fromNano int64, toNano int64) backend.TimeRange {
+	from := r.GetFromAsTimeUTC().Add(time.Duration(fromNano * int64(time.Nanosecond)))
+	to := r.GetToAsTimeUTC().Add(time.Duration(toNano * int64(time.Nanosecond)))
+	return backend.TimeRange{
+		From: from,
+		To:   to,
+	}
+}
+
 // parseRequest parses a request into parsed queries grouped by datasource uid
 func (s *ServiceImpl) parseMetricRequest(ctx context.Context, user *user.SignedInUser, skipDSCache bool, reqDTO dtos.MetricRequest) (*parsedRequest, error) {
 	if len(reqDTO.Queries) == 0 {
 		return nil, ErrNoQueriesFound
 	}
 
-	timeRange := legacydata.NewDataTimeRange(reqDTO.From, reqDTO.To)
+	timeRange := makeBackendTimeRange(legacydata.NewDataTimeRange(reqDTO.From, reqDTO.To), reqDTO.FromNano, reqDTO.ToNano)
 	req := &parsedRequest{
 		hasExpression: false,
 		parsedQueries: make(map[string][]parsedQuery),
@@ -292,10 +301,7 @@ func (s *ServiceImpl) parseMetricRequest(ctx context.Context, user *user.SignedI
 		req.parsedQueries[ds.UID] = append(req.parsedQueries[ds.UID], parsedQuery{
 			datasource: ds,
 			query: backend.DataQuery{
-				TimeRange: backend.TimeRange{
-					From: timeRange.GetFromAsTimeUTC(),
-					To:   timeRange.GetToAsTimeUTC(),
-				},
+				TimeRange:     timeRange,
 				RefID:         query.Get("refId").MustString("A"),
 				MaxDataPoints: query.Get("maxDataPoints").MustInt64(100),
 				Interval:      time.Duration(query.Get("intervalMs").MustInt64(1000)) * time.Millisecond,
