@@ -13,7 +13,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/middleware/cookies"
-	"github.com/grafana/grafana/pkg/services/auth"
+	"github.com/grafana/grafana/pkg/models/usertoken"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -22,15 +22,16 @@ import (
 )
 
 const (
-	ClientAPIKey    = "auth.client.api-key" // #nosec G101
-	ClientAnonymous = "auth.client.anonymous"
-	ClientBasic     = "auth.client.basic"
-	ClientJWT       = "auth.client.jwt"
-	ClientRender    = "auth.client.render"
-	ClientSession   = "auth.client.session"
-	ClientForm      = "auth.client.form"
-	ClientProxy     = "auth.client.proxy"
-	ClientSAML      = "auth.client.saml"
+	ClientAPIKey      = "auth.client.api-key" // #nosec G101
+	ClientAnonymous   = "auth.client.anonymous"
+	ClientBasic       = "auth.client.basic"
+	ClientJWT         = "auth.client.jwt"
+	ClientExtendedJWT = "auth.client.extended-jwt"
+	ClientRender      = "auth.client.render"
+	ClientSession     = "auth.client.session"
+	ClientForm        = "auth.client.form"
+	ClientProxy       = "auth.client.proxy"
+	ClientSAML        = "auth.client.saml"
 )
 
 const (
@@ -219,7 +220,7 @@ type Identity struct {
 	// OAuthToken is the OAuth token used to authenticate the entity.
 	OAuthToken *oauth2.Token
 	// SessionToken is the session token used to authenticate the entity.
-	SessionToken *auth.UserToken
+	SessionToken *usertoken.UserToken
 	// ClientParams are hints for the auth service on how to handle the identity.
 	// Set by the authenticating client.
 	ClientParams ClientParams
@@ -326,6 +327,8 @@ func IdentityFromSignedInUser(id string, usr *user.SignedInUser, params ClientPa
 		Teams:          usr.Teams,
 		ClientParams:   params,
 		Permissions:    usr.Permissions,
+		AuthModule:     usr.ExternalAuthModule,
+		AuthID:         usr.ExternalAuthID,
 	}
 }
 
@@ -363,7 +366,7 @@ func handleLogin(r *http.Request, w http.ResponseWriter, cfg *setting.Cfg, ident
 		redirectURL = redirectTo
 	}
 
-	WriteSessionCookie(w, cfg, identity)
+	WriteSessionCookie(w, cfg, identity.SessionToken)
 	return redirectURL
 }
 
@@ -377,11 +380,28 @@ func getRedirectURL(r *http.Request) string {
 	return v
 }
 
-func WriteSessionCookie(w http.ResponseWriter, cfg *setting.Cfg, identity *Identity) {
+const sessionExpiryCookie = "grafana_session_expiry"
+
+func WriteSessionCookie(w http.ResponseWriter, cfg *setting.Cfg, token *usertoken.UserToken) {
 	maxAge := int(cfg.LoginMaxLifetime.Seconds())
 	if cfg.LoginMaxLifetime <= 0 {
 		maxAge = -1
 	}
 
-	cookies.WriteCookie(w, cfg.LoginCookieName, url.QueryEscape(identity.SessionToken.UnhashedToken), maxAge, nil)
+	cookies.WriteCookie(w, cfg.LoginCookieName, url.QueryEscape(token.UnhashedToken), maxAge, nil)
+	expiry := token.NextRotation(time.Duration(cfg.TokenRotationIntervalMinutes) * time.Minute)
+	cookies.WriteCookie(w, sessionExpiryCookie, url.QueryEscape(strconv.FormatInt(expiry.Unix(), 10)), maxAge, func() cookies.CookieOptions {
+		opts := cookies.NewCookieOptions()
+		opts.NotHttpOnly = true
+		return opts
+	})
+}
+
+func DeleteSessionCookie(w http.ResponseWriter, cfg *setting.Cfg) {
+	cookies.DeleteCookie(w, cfg.LoginCookieName, nil)
+	cookies.DeleteCookie(w, sessionExpiryCookie, func() cookies.CookieOptions {
+		opts := cookies.NewCookieOptions()
+		opts.NotHttpOnly = true
+		return opts
+	})
 }

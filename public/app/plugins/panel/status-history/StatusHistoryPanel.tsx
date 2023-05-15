@@ -32,7 +32,7 @@ interface TimelinePanelProps extends PanelProps<PanelOptions> {}
 /**
  * @alpha
  */
-export const StatusHistoryPanel: React.FC<TimelinePanelProps> = ({
+export const StatusHistoryPanel = ({
   data,
   timeRange,
   timeZone,
@@ -40,7 +40,7 @@ export const StatusHistoryPanel: React.FC<TimelinePanelProps> = ({
   width,
   height,
   onChangeTimeRange,
-}) => {
+}: TimelinePanelProps) => {
   const theme = useTheme2();
 
   const oldConfig = useRef<UPlotConfigBuilder | undefined>(undefined);
@@ -68,8 +68,8 @@ export const StatusHistoryPanel: React.FC<TimelinePanelProps> = ({
   };
 
   const { frames, warn } = useMemo(
-    () => prepareTimelineFields(data?.series, false, timeRange, theme),
-    [data, timeRange, theme]
+    () => prepareTimelineFields(data.series, false, timeRange, theme),
+    [data.series, timeRange, theme]
   );
 
   const legendItems = useMemo(

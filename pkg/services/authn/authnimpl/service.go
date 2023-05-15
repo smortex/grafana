@@ -2,6 +2,7 @@ package authnimpl
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"strconv"
 
@@ -30,6 +31,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/rendering"
+	"github.com/grafana/grafana/pkg/services/signingkeys"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
@@ -62,7 +64,8 @@ func ProvideService(
 	features *featuremgmt.FeatureManager, oauthTokenService oauthtoken.OAuthTokenService,
 	socialService social.Service, cache *remotecache.RemoteCache,
 	ldapService service.LDAP, registerer prometheus.Registerer,
-) *Service {
+	signingKeysService signingkeys.Service,
+) authn.Service {
 	s := &Service{
 		log:            log.New("authn.service"),
 		cfg:            cfg,
@@ -81,7 +84,7 @@ func ProvideService(
 	s.RegisterClient(clients.ProvideAPIKey(apikeyService, userService))
 
 	if cfg.LoginCookieName != "" {
-		s.RegisterClient(clients.ProvideSession(sessionService, userService, cfg))
+		s.RegisterClient(clients.ProvideSession(cfg, sessionService, features))
 	}
 
 	if s.cfg.AnonymousEnabled {
@@ -90,7 +93,7 @@ func ProvideService(
 
 	var proxyClients []authn.ProxyClient
 	var passwordClients []authn.PasswordClient
-	if s.cfg.LDAPEnabled {
+	if s.cfg.LDAPAuthEnabled {
 		ldap := clients.ProvideLDAP(cfg, ldapService)
 		proxyClients = append(proxyClients, ldap)
 		passwordClients = append(passwordClients, ldap)
@@ -125,6 +128,10 @@ func ProvideService(
 
 	if s.cfg.JWTAuthEnabled {
 		s.RegisterClient(clients.ProvideJWT(jwtService, cfg))
+	}
+
+	if s.cfg.ExtendedJWTAuthEnabled && features.IsEnabled(featuremgmt.FlagExternalServiceAuth) {
+		s.RegisterClient(clients.ProvideExtendedJWT(userService, cfg, signingKeysService))
 	}
 
 	for name := range socialService.GetOAuthProviders() {
@@ -187,6 +194,12 @@ func (s *Service) Authenticate(ctx context.Context, r *authn.Request) (*authn.Id
 		if item.v.Test(ctx, r) {
 			identity, err := s.authenticate(ctx, item.v, r)
 			if err != nil {
+				// Note: special case for token rotation
+				// We don't want to fallthrough in this case
+				if errors.Is(err, authn.ErrTokenNeedsRotation) {
+					return nil, err
+				}
+
 				authErr = multierror.Append(authErr, err)
 				// try next
 				continue

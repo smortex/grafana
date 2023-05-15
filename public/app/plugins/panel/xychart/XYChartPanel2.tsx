@@ -33,7 +33,7 @@ import { PanelOptions, ScatterHoverEvent, ScatterSeries } from './types';
 type Props = PanelProps<PanelOptions>;
 const TOOLTIP_OFFSET = 10;
 
-export const XYChartPanel2: React.FC<Props> = (props: Props) => {
+export const XYChartPanel2 = (props: Props) => {
   const [error, setError] = useState<string | undefined>();
   const [series, setSeries] = useState<ScatterSeries[]>([]);
   const [builder, setBuilder] = useState<UPlotConfigBuilder | undefined>();
@@ -90,7 +90,7 @@ export const XYChartPanel2: React.FC<Props> = (props: Props) => {
   useEffect(() => {
     if (oldOptions !== props.options || oldData?.structureRev !== props.data.structureRev) {
       initSeries();
-    } else if (oldData !== props.data) {
+    } else if (oldData?.series !== props.data.series) {
       initFacets();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
