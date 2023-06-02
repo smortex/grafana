@@ -1,8 +1,14 @@
+skip_output:
+  - meta
+  - summary
+  # - execution
+  - execution_out
+
 pre-commit:
   commands:
     frontend-betterer:
       glob: '*.{ts,tsx}'
-      run: yarn betterer precommit --reporter ./scripts/bettererReporter.ts {staged_files}
+      run: yarn betterer precommit {staged_files}
 
     frontend-eslint:
       glob: '*.{js,ts,tsx}'
