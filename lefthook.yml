@@ -1,5 +1,8 @@
 skip_output:
+  - meta
+  - execution_info
   - execution_out
+  - skips
 
 pre-commit:
   commands:
