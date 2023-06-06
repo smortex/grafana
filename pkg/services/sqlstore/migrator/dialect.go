@@ -89,6 +89,13 @@ var supportedDialects = map[string]dialectFunc{
 }
 
 func NewDialect(engine *xorm.Engine) Dialect {
+	fmt.Println("ENGINE")
+	fmt.Println(engine)
+	fmt.Println("DIALECT")
+	fmt.Println(engine.Dialect())
+	fmt.Println("DRIVERNAME")
+	fmt.Println(engine.Dialect().DriverName())
+
 	name := engine.DriverName()
 	if fn, exist := supportedDialects[name]; exist {
 		return fn(engine)
