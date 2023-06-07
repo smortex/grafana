@@ -334,4 +334,8 @@ const (
 	// FlagSqlDatasourceDatabaseSelection
 	// Enables previous SQL data source dataset dropdown behavior
 	FlagSqlDatasourceDatabaseSelection = "sqlDatasourceDatabaseSelection"
+
+	// FlagLlmAPI
+	// Enables the LLM API
+	FlagLlmAPI = "llmAPI"
 )

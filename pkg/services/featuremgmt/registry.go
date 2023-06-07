@@ -556,5 +556,11 @@ var (
 			State:        FeatureStateBeta,
 			Owner:        grafanaBiSquad,
 		},
+		{
+			Name:        "llmAPI",
+			Description: "Enables the LLM API",
+			State:       FeatureStateAlpha,
+			Owner:       machineLearningSquad,
+		},
 	}
 )
