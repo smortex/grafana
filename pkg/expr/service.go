@@ -46,19 +46,26 @@ type Service struct {
 	pCtxProvider *plugincontext.Provider
 	features     featuremgmt.FeatureToggles
 
+	plugins       plugins.Store
+	pluginsClient backend.CallResourceHandler
+
 	tracer  tracing.Tracer
 	metrics *metrics
 }
 
 func ProvideService(cfg *setting.Cfg, pluginClient plugins.Client, pCtxProvider *plugincontext.Provider,
-	features featuremgmt.FeatureToggles, registerer prometheus.Registerer, tracer tracing.Tracer) *Service {
+	features featuremgmt.FeatureToggles, registerer prometheus.Registerer, tracer tracing.Tracer,
+	plugins plugins.Store,
+) *Service {
 	return &Service{
-		cfg:          cfg,
-		dataService:  pluginClient,
-		pCtxProvider: pCtxProvider,
-		features:     features,
-		tracer:       tracer,
-		metrics:      newMetrics(registerer),
+		cfg:           cfg,
+		dataService:   pluginClient,
+		pCtxProvider:  pCtxProvider,
+		features:      features,
+		tracer:        tracer,
+		metrics:       newMetrics(registerer),
+		plugins:       plugins,
+		pluginsClient: pluginClient,
 	}
 }
 
