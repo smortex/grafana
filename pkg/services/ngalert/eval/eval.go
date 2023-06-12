@@ -17,6 +17,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/expr/classic"
+	"github.com/grafana/grafana/pkg/expr/ml"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -271,6 +272,8 @@ func getExprRequest(ctx EvaluationContext, data []models.AlertQuery, dsCacheServ
 		if !ok {
 			if expr.IsDataSource(q.DatasourceUID) {
 				ds = expr.DataSourceModel()
+			} else if ml.IsDataSource(q.DatasourceUID) {
+				ds = ml.DataSourceModel()
 			} else {
 				ds, err = dsCacheService.GetDatasourceByUID(ctx.Ctx, q.DatasourceUID, ctx.User, false /*skipCache*/)
 				if err != nil {

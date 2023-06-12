@@ -2,6 +2,9 @@ package ml
 
 import (
 	"fmt"
+
+	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/services/datasources"
 )
 
 // DatasourceType is the string constant used as the datasource when the property is in Datasource.Type.
@@ -15,6 +18,17 @@ const DatasourceUID = DatasourceType
 // IsDataSource checks if the uid points to ML node query
 func IsDataSource(uid string) bool {
 	return uid == DatasourceUID
+}
+
+func DataSourceModel() *datasources.DataSource {
+	return &datasources.DataSource{
+		ID:             -200,
+		UID:            DatasourceUID,
+		Name:           DatasourceUID,
+		Type:           DatasourceType,
+		JsonData:       simplejson.New(),
+		SecureJsonData: make(map[string][]byte),
+	}
 }
 
 func readValue[T any](query map[string]interface{}, key string) (T, error) {
