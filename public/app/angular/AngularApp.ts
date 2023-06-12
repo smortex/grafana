@@ -9,18 +9,18 @@ import { extend } from 'lodash';
 
 import { getTemplateSrv } from '@grafana/runtime';
 import coreModule, { angularModules } from 'app/angular/core_module';
-import appEvents from 'app/core/app_events';
+// import appEvents from 'app/core/app_events';
 import { config } from 'app/core/config';
-import { contextSrv } from 'app/core/services/context_srv';
+// import { contextSrv } from 'app/core/services/context_srv';
 import { DashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { exposeToPlugin } from 'app/features/plugins/plugin_loader';
-import * as sdk from 'app/plugins/sdk';
+// import { exposeToPlugin } from 'app/features/plugins/plugin_loader';
+// import * as sdk from 'app/plugins/sdk';
 
 import { registerAngularDirectives } from './angular_wrappers';
 import { initAngularRoutingBridge } from './bridgeReactAngularRouting';
 import { monkeyPatchInjectorWithPreAssignedBindings } from './injectorMonkeyPatch';
-import { promiseToDigest } from './promiseToDigest';
+// import { promiseToDigest } from './promiseToDigest';
 import { registerComponents } from './registerComponents';
 
 export class AngularApp {
@@ -106,16 +106,16 @@ export class AngularApp {
     initAngularRoutingBridge();
 
     // Angular plugins import this
-    exposeToPlugin('angular', angular);
-    exposeToPlugin('app/core/utils/promiseToDigest', { promiseToDigest, __esModule: true });
-    exposeToPlugin('app/plugins/sdk', sdk);
-    exposeToPlugin('app/core/core_module', coreModule);
-    exposeToPlugin('app/core/core', {
-      coreModule: coreModule,
-      appEvents: appEvents,
-      contextSrv: contextSrv,
-      __esModule: true,
-    });
+    // exposeToPlugin('angular', angular);
+    // exposeToPlugin('app/core/utils/promiseToDigest', { promiseToDigest, __esModule: true });
+    // exposeToPlugin('app/plugins/sdk', sdk);
+    // exposeToPlugin('app/core/core_module', coreModule);
+    // exposeToPlugin('app/core/core', {
+    //   coreModule: coreModule,
+    //   appEvents: appEvents,
+    //   contextSrv: contextSrv,
+    //   __esModule: true,
+    // });
 
     // disable tool tip animation
     $.fn.tooltip.defaults.animation = false;

@@ -1,111 +1,168 @@
 import * as emotion from '@emotion/css';
 import * as emotionReact from '@emotion/react';
-import * as d3 from 'd3';
-import jquery from 'jquery';
+// import * as d3 from 'd3';
+// import jquery from 'jquery';
 import _ from 'lodash'; // eslint-disable-line lodash/import-scope
 import moment from 'moment'; // eslint-disable-line no-restricted-imports
-import prismjs from 'prismjs';
+// import prismjs from 'prismjs';
 import react from 'react';
-import reactDom from 'react-dom';
-import * as reactRedux from 'react-redux'; // eslint-disable-line no-restricted-imports
-import * as reactRouterDom from 'react-router-dom';
-import * as reactRouterCompat from 'react-router-dom-v5-compat';
-import * as redux from 'redux';
-import * as rxjs from 'rxjs';
-import * as rxjsOperators from 'rxjs/operators';
-import slate from 'slate';
-import slatePlain from 'slate-plain-serializer';
-import slateReact from 'slate-react';
+// import reactDom from 'react-dom';
+// import * as reactRedux from 'react-redux'; // eslint-disable-line no-restricted-imports
+// import * as reactRouterDom from 'react-router-dom';
+// import * as reactRouterCompat from 'react-router-dom-v5-compat';
+// import * as redux from 'redux';
+// import * as rxjs from 'rxjs';
+// import * as rxjsOperators from 'rxjs/operators';
+// import slate from 'slate';
+// import slatePlain from 'slate-plain-serializer';
+// import slateReact from 'slate-react';
 
 import * as grafanaData from '@grafana/data';
 import * as grafanaRuntime from '@grafana/runtime';
 import * as grafanaUIraw from '@grafana/ui';
-import TableModel from 'app/core/TableModel';
+// import TableModel from 'app/core/TableModel';
 import config from 'app/core/config';
-import { appEvents, contextSrv } from 'app/core/core';
-import { BackendSrv, getBackendSrv } from 'app/core/services/backend_srv';
-import impressionSrv from 'app/core/services/impression_srv';
-import TimeSeries from 'app/core/time_series2';
-import * as flatten from 'app/core/utils/flatten';
-import kbn from 'app/core/utils/kbn';
-import * as ticks from 'app/core/utils/ticks';
+// import { appEvents, contextSrv } from 'app/core/core';
+// import { BackendSrv, getBackendSrv } from 'app/core/services/backend_srv';
+// import impressionSrv from 'app/core/services/impression_srv';
+// import TimeSeries from 'app/core/time_series2';
+// import * as flatten from 'app/core/utils/flatten';
+// import kbn from 'app/core/utils/kbn';
+// import * as ticks from 'app/core/utils/ticks';
 
 import { GenericDataSourcePlugin } from '../datasources/types';
 
 import builtInPlugins from './built_in_plugins';
-import { sandboxPluginDependencies } from './sandbox/plugin_dependencies';
+// import { sandboxPluginDependencies } from './sandbox/plugin_dependencies';
 import { importPluginModuleInSandbox } from './sandbox/sandbox_plugin_loader';
-import { locateFromCDN, translateForCDN } from './systemjsPlugins/pluginCDN';
-import { fetchCSS, locateCSS } from './systemjsPlugins/pluginCSS';
-import { locateWithCache, registerPluginInCache } from './systemjsPlugins/pluginCacheBuster';
+// import { locateFromCDN, translateForCDN } from './systemjsPlugins/pluginCDN';
+// import { fetchCSS, locateCSS } from './systemjsPlugins/pluginCSS';
+// import { locateWithCache, registerPluginInCache } from './systemjsPlugins/pluginCacheBuster';
 
 // Help the 6.4 to 6.5 migration
 // The base classes were moved from @grafana/ui to @grafana/data
 // This exposes the same classes on both import paths
-const grafanaUI = grafanaUIraw as any;
+const grafanaUI = grafanaUIraw as Record<string, unknown>;
 grafanaUI.PanelPlugin = grafanaData.PanelPlugin;
 grafanaUI.DataSourcePlugin = grafanaData.DataSourcePlugin;
 grafanaUI.AppPlugin = grafanaData.AppPlugin;
 grafanaUI.DataSourceApi = grafanaData.DataSourceApi;
 
-grafanaRuntime.SystemJS.registry.set('css', grafanaRuntime.SystemJS.newModule({ locate: locateCSS, fetch: fetchCSS }));
-grafanaRuntime.SystemJS.registry.set('plugin-loader', grafanaRuntime.SystemJS.newModule({ locate: locateWithCache }));
-grafanaRuntime.SystemJS.registry.set(
-  'cdn-loader',
-  grafanaRuntime.SystemJS.newModule({ locate: locateFromCDN, translate: translateForCDN })
-);
+const { SystemJS } = grafanaRuntime;
 
-grafanaRuntime.SystemJS.config({
-  baseURL: 'public',
-  defaultExtension: 'js',
-  packages: {
-    plugins: {
-      defaultExtension: 'js',
-    },
-    'plugin-cdn': {
-      defaultExtension: 'js',
-    },
-  },
-  map: {
-    text: 'vendor/plugin-text/text.js',
-  },
-  meta: {
-    '/*': {
-      esModule: true,
-      authorization: true,
-      loader: 'plugin-loader',
-    },
-    '*.css': {
-      loader: 'css',
-    },
-    'plugin-cdn/*': {
-      esModule: true,
-      authorization: false,
-      loader: 'cdn-loader',
-    },
-  },
-});
+const importMap = {
+  '@emotion/css': emotion,
+  '@emotion/react': emotionReact,
+  '@grafana/data': grafanaData,
+  '@grafana/runtime': grafanaRuntime,
+  '@grafana/ui': grafanaUI,
+  lodash: _,
+  moment,
+  react,
+} as Record<string, any>;
+// } as Record<string, SystemJS.module>;
 
-export function exposeToPlugin(name: string, component: any) {
-  grafanaRuntime.SystemJS.registerDynamic(name, [], true, (require: any, exports: any, module: { exports: any }) => {
-    module.exports = component;
+const imports = Object.keys(importMap).reduce((acc, key) => {
+  // Use the 'app:' prefix to act as a URL instead of a bare specifier
+  const module_name = `app:${key}`;
+  // Set the module in Systemjs
+  SystemJS.set(module_name, importMap[key]);
+  acc[key] = module_name;
+
+  return acc;
+}, {} as Record<string, string>);
+console.log({ imports });
+// Force SystemJS to use fetch and eval which is necessary to transform the plugins
+// for CDN loading shizzle.
+SystemJS.shouldFetch = function () {
+  return true;
+};
+
+const systemJSPrototype = SystemJS.constructor.prototype;
+const fetch = systemJSPrototype.fetch;
+
+// Is this how we now do plugins?
+systemJSPrototype.fetch = function (url: any, options: any) {
+  console.log({ url, options });
+  return fetch(url, options).then((res: any) => {
+    const contentType = res.headers.get('content-type');
+    console.log({ res, contentType });
+    res.text().then((source: string) => console.log(source));
+    return res;
   });
+};
 
-  // exposes this dependency to sandboxed plugins too.
-  // the following sandboxPluginDependencies don't depend or interact
-  // with SystemJS in any way.
-  sandboxPluginDependencies.set(name, component);
+// pass the map of module names so systemjs can resolve them
+// to the imports above.
+SystemJS.addImportMap({ imports });
+
+// Let's see what's in the SystemJS entries.
+for (const [name, moduleExports] of SystemJS.entries()) {
+  console.log(name);
+  console.log(moduleExports);
 }
 
-exposeToPlugin('@grafana/data', grafanaData);
-exposeToPlugin('@grafana/ui', grafanaUI);
-exposeToPlugin('@grafana/runtime', grafanaRuntime);
-exposeToPlugin('lodash', _);
-exposeToPlugin('moment', moment);
-exposeToPlugin('jquery', jquery);
-exposeToPlugin('d3', d3);
-exposeToPlugin('rxjs', rxjs);
-exposeToPlugin('rxjs/operators', rxjsOperators);
+// load a really basic plugin directly for now.
+SystemJS.import('http://localhost:3000/public/plugins/grafana-clock-panel/module.js');
+
+// grafanaRuntime.SystemJS.registry.set('css', grafanaRuntime.SystemJS.newModule({ locate: locateCSS, fetch: fetchCSS }));
+// grafanaRuntime.SystemJS.registry.set('plugin-loader', grafanaRuntime.SystemJS.newModule({ locate: locateWithCache }));
+// grafanaRuntime.SystemJS.registry.set(
+//   'cdn-loader',
+//   grafanaRuntime.SystemJS.newModule({ locate: locateFromCDN, translate: translateForCDN })
+// );
+
+// grafanaRuntime.SystemJS.config({
+//   baseURL: 'public',
+//   defaultExtension: 'js',
+//   packages: {
+//     plugins: {
+//       defaultExtension: 'js',
+//     },
+//     'plugin-cdn': {
+//       defaultExtension: 'js',
+//     },
+//   },
+//   map: {
+//     text: 'vendor/plugin-text/text.js',
+//   },
+//   meta: {
+//     '/*': {
+//       esModule: true,
+//       authorization: true,
+//       loader: 'plugin-loader',
+//     },
+//     '*.css': {
+//       loader: 'css',
+//     },
+//     'plugin-cdn/*': {
+//       esModule: true,
+//       authorization: false,
+//       loader: 'cdn-loader',
+//     },
+//   },
+// });
+
+// export function exposeToPlugin(name: string, component: any) {
+//   grafanaRuntime.SystemJS.registerDynamic(name, [], true, (require: any, exports: any, module: { exports: any }) => {
+//     module.exports = component;
+//   });
+
+//   // exposes this dependency to sandboxed plugins too.
+//   // the following sandboxPluginDependencies don't depend or interact
+//   // with SystemJS in any way.
+//   sandboxPluginDependencies.set(name, component);
+// }
+
+// exposeToPlugin('@grafana/data', grafanaData);
+// exposeToPlugin('@grafana/ui', grafanaUI);
+// exposeToPlugin('@grafana/runtime', grafanaRuntime);
+// exposeToPlugin('lodash', _);
+// exposeToPlugin('moment', moment);
+// exposeToPlugin('jquery', jquery);
+// exposeToPlugin('d3', d3);
+// exposeToPlugin('rxjs', rxjs);
+// exposeToPlugin('rxjs/operators', rxjsOperators);
 
 // Migration - React Router v5 -> v6
 // =================================
@@ -119,79 +176,79 @@ exposeToPlugin('rxjs/operators', rxjsOperators);
 // just exposing "react-router-dom-v5-compat".
 //
 // (This means that we are exposing two versions of the same package).
-exposeToPlugin('react-router', reactRouterCompat); // react-router-dom@v6, react-router@v6 (included)
-exposeToPlugin('react-router-dom', reactRouterDom); // react-router-dom@v5
+// exposeToPlugin('react-router', reactRouterCompat); // react-router-dom@v6, react-router@v6 (included)
+// exposeToPlugin('react-router-dom', reactRouterDom); // react-router-dom@v5
 
 // Experimental modules
-exposeToPlugin('prismjs', prismjs);
-exposeToPlugin('slate', slate);
-exposeToPlugin('slate-react', slateReact);
-exposeToPlugin('@grafana/slate-react', slateReact); // for backwards compatibility with older plugins
-exposeToPlugin('slate-plain-serializer', slatePlain);
-exposeToPlugin('react', react);
-exposeToPlugin('react-dom', reactDom);
-exposeToPlugin('react-redux', reactRedux);
-exposeToPlugin('redux', redux);
-exposeToPlugin('emotion', emotion);
-exposeToPlugin('@emotion/css', emotion);
-exposeToPlugin('@emotion/react', emotionReact);
+// exposeToPlugin('prismjs', prismjs);
+// exposeToPlugin('slate', slate);
+// exposeToPlugin('slate-react', slateReact);
+// exposeToPlugin('@grafana/slate-react', slateReact); // for backwards compatibility with older plugins
+// exposeToPlugin('slate-plain-serializer', slatePlain);
+// exposeToPlugin('react', react);
+// exposeToPlugin('react-dom', reactDom);
+// exposeToPlugin('react-redux', reactRedux);
+// exposeToPlugin('redux', redux);
+// exposeToPlugin('emotion', emotion);
+// exposeToPlugin('@emotion/css', emotion);
+// exposeToPlugin('@emotion/react', emotionReact);
 
-exposeToPlugin('app/features/dashboard/impression_store', {
-  impressions: impressionSrv,
-  __esModule: true,
-});
+// exposeToPlugin('app/features/dashboard/impression_store', {
+//   impressions: impressionSrv,
+//   __esModule: true,
+// });
 
 /**
  * NOTE: this is added temporarily while we explore a long term solution
  * If you use this export, only use the:
  *  get/delete/post/patch/request methods
  */
-exposeToPlugin('app/core/services/backend_srv', {
-  BackendSrv,
-  getBackendSrv,
-});
+// exposeToPlugin('app/core/services/backend_srv', {
+//   BackendSrv,
+//   getBackendSrv,
+// });
 
-exposeToPlugin('app/core/utils/datemath', grafanaData.dateMath);
-exposeToPlugin('app/core/utils/flatten', flatten);
-exposeToPlugin('app/core/utils/kbn', kbn);
-exposeToPlugin('app/core/utils/ticks', ticks);
-exposeToPlugin('app/core/config', config);
-exposeToPlugin('app/core/time_series', TimeSeries);
-exposeToPlugin('app/core/time_series2', TimeSeries);
-exposeToPlugin('app/core/table_model', TableModel);
-exposeToPlugin('app/core/app_events', appEvents);
-exposeToPlugin('app/core/core', {
-  appEvents: appEvents,
-  contextSrv: contextSrv,
-  __esModule: true,
-});
+// exposeToPlugin('app/core/utils/datemath', grafanaData.dateMath);
+// exposeToPlugin('app/core/utils/flatten', flatten);
+// exposeToPlugin('app/core/utils/kbn', kbn);
+// exposeToPlugin('app/core/utils/ticks', ticks);
+// exposeToPlugin('app/core/config', config);
+// exposeToPlugin('app/core/time_series', TimeSeries);
+// exposeToPlugin('app/core/time_series2', TimeSeries);
+// exposeToPlugin('app/core/table_model', TableModel);
+// exposeToPlugin('app/core/app_events', appEvents);
+// exposeToPlugin('app/core/core', {
+//   appEvents: appEvents,
+//   contextSrv: contextSrv,
+//   __esModule: true,
+// });
 
-import 'vendor/flot/jquery.flot';
-import 'vendor/flot/jquery.flot.selection';
-import 'vendor/flot/jquery.flot.time';
-import 'vendor/flot/jquery.flot.stack';
-import 'vendor/flot/jquery.flot.stackpercent';
-import 'vendor/flot/jquery.flot.fillbelow';
-import 'vendor/flot/jquery.flot.crosshair';
-import 'vendor/flot/jquery.flot.dashes';
-import 'vendor/flot/jquery.flot.gauge';
+// import 'vendor/flot/jquery.flot';
+// import 'vendor/flot/jquery.flot.selection';
+// import 'vendor/flot/jquery.flot.time';
+// import 'vendor/flot/jquery.flot.stack';
+// import 'vendor/flot/jquery.flot.stackpercent';
+// import 'vendor/flot/jquery.flot.fillbelow';
+// import 'vendor/flot/jquery.flot.crosshair';
+// import 'vendor/flot/jquery.flot.dashes';
+// import 'vendor/flot/jquery.flot.gauge';
 
-const flotDeps = [
-  'jquery.flot',
-  'jquery.flot.pie',
-  'jquery.flot.time',
-  'jquery.flot.fillbelow',
-  'jquery.flot.crosshair',
-  'jquery.flot.stack',
-  'jquery.flot.selection',
-  'jquery.flot.stackpercent',
-  'jquery.flot.events',
-  'jquery.flot.gauge',
-];
+// const flotDeps = [
+//   'jquery.flot',
+//   'jquery.flot.pie',
+//   'jquery.flot.time',
+//   'jquery.flot.fillbelow',
+//   'jquery.flot.crosshair',
+//   'jquery.flot.stack',
+//   'jquery.flot.selection',
+//   'jquery.flot.stackpercent',
+//   'jquery.flot.events',
+//   'jquery.flot.gauge',
+// ];
 
-for (const flotDep of flotDeps) {
-  exposeToPlugin(flotDep, { fakeDep: 1 });
-}
+// for (const flotDep of flotDeps) {
+//   exposeToPlugin(flotDep, { fakeDep: 1 });
+// }
 
 export async function importPluginModule({
   path,
@@ -204,9 +261,9 @@ export async function importPluginModule({
   version?: string;
   isAngular?: boolean;
 }): Promise<any> {
-  if (version) {
-    registerPluginInCache({ path, version });
-  }
+  // if (version) {
+  //   registerPluginInCache({ path, version });
+  // }
 
   const builtIn = builtInPlugins[path];
   if (builtIn) {
@@ -223,7 +280,7 @@ export async function importPluginModule({
     return importPluginModuleInSandbox({ pluginId });
   }
 
-  return grafanaRuntime.SystemJS.import(path);
+  return SystemJS.import(path);
 }
 
 function isFrontendSandboxSupported(isAngular?: boolean): boolean {

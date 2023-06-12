@@ -1,11 +1,9 @@
-// @ts-ignore
-import System from 'systemjs/dist/system.js';
+import 'systemjs/dist/system';
+import 'systemjs/dist/extras/amd';
 
 import { PanelPlugin } from '@grafana/data';
 
 import { config } from '../config';
-
-// @ts-ignore
 
 /**
  * Option to specify a plugin css that should be applied for the dark
@@ -21,7 +19,8 @@ export interface PluginCssOptions {
 /**
  * @internal
  */
-export const SystemJS = System;
+// @ts-ignore
+export const SystemJS = window.System;
 
 /**
  * Use this to load css for a Grafana plugin by specifying a {@link PluginCssOptions}

@@ -440,5 +440,13 @@
   "engines": {
     "node": ">= 18"
   },
-  "packageManager": "yarn@3.6.0"
+  "packageManager": "yarn@3.6.0",
+  "dependenciesMeta": {
+    "@types/systemjs@6.13.1": {
+      "unplugged": true
+    },
+    "systemjs@6.14.1": {
+      "unplugged": true
+    }
+  }
 }
