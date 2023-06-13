@@ -41,7 +41,7 @@ interface Props extends Themeable2 {
   onPermalinkClick?: (row: LogRowModel) => Promise<void>;
   styles: LogRowStyles;
   permalinkedRowId?: string;
-  scrollIntoView: (element: HTMLElement) => void;
+  scrollIntoView?: (element: HTMLElement) => void;
 }
 
 interface State {
@@ -120,23 +120,21 @@ class UnThemedLogRow extends PureComponent<Props, State> {
     this.scrollToLogRow();
   }
 
-  componentDidUpdate(prevProps: Readonly<Props>, prevState: Readonly<State>): void {
-    if (
-      this.props.permalinkedRowId !== prevProps.permalinkedRowId &&
-      this.props.permalinkedRowId !== this.props.row.uid
-    ) {
-      this.setState({ highlightBackround: false });
-    } else if (this.props.permalinkedRowId === this.props.row.uid && !this.state.highlightBackround) {
-      this.scrollToLogRow();
-    }
+  componentDidUpdate() {
+    this.scrollToLogRow();
   }
 
   scrollToLogRow = () => {
-    if (this.logLineRef.current && this.props.permalinkedRowId === this.props.row.uid) {
-      this.props.scrollIntoView(this.logLineRef.current);
-      this.setState({ highlightBackround: true });
-    } else {
+    if (this.props.permalinkedRowId !== this.props.row.uid) {
       this.setState({ highlightBackround: false });
+      return;
+    }
+
+    if (this.logLineRef.current && this.props.scrollIntoView) {
+      this.props.scrollIntoView(this.logLineRef.current);
+    }
+    if (!this.state.highlightBackround) {
+      this.setState({ highlightBackround: true });
     }
   };
 

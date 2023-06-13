@@ -51,7 +51,6 @@ import { ExploreId } from 'app/types/explore';
 import { LogRows } from '../../logs/components/LogRows';
 import { LogRowContextModal } from '../../logs/components/log-context/LogRowContextModal';
 import { changePanelState } from '../state/explorePane';
-import { getUrlStateFromPaneState } from '../state/utils';
 
 import { LogsMetaRow } from './LogsMetaRow';
 import LogsNavigation from './LogsNavigation';
