@@ -114,6 +114,7 @@ Experimental features might be changed or removed without prior notice.
 | `lokiPredefinedOperations`         | Adds predefined query operations to Loki query editor                                                        |
 | `pluginsFrontendSandbox`           | Enables the plugins frontend sandbox                                                                         |
 | `cloudWatchLogsMonacoEditor`       | Enables the Monaco editor for CloudWatch Logs queries                                                        |
+| `alertingLokiRangeToInstant`       | If enabled, it will rewrite eligible loki range queries to instant queries                                   |
 
 ## Development feature toggles
 

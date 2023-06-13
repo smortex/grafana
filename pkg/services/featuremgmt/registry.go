@@ -564,5 +564,12 @@ var (
 			FrontendOnly: true,
 			Owner:        awsPluginsSquad,
 		},
+		{
+			Name:         "alertingLokiRangeToInstant",
+			Description:  "If enabled, it will rewrite eligible loki range queries to instant queries",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaAlertingSquad,
+		},
 	}
 )

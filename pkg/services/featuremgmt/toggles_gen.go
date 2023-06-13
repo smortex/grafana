@@ -338,4 +338,8 @@ const (
 	// FlagCloudWatchLogsMonacoEditor
 	// Enables the Monaco editor for CloudWatch Logs queries
 	FlagCloudWatchLogsMonacoEditor = "cloudWatchLogsMonacoEditor"
+
+	// FlagAlertingLokiRangeToInstant
+	// If enabled, it will rewrite eligible loki range queries to instant queries
+	FlagAlertingLokiRangeToInstant = "alertingLokiRangeToInstant"
 )
